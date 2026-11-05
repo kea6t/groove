@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111b16">
+<title>groove. — Camera Test</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111b16;color:#f7f3e9;font-family:system-ui,-apple-system,sans-serif}main{max-width:620px;margin:auto;padding:32px 20px 80px}h1{font-size:48px;letter-spacing:-2px;margin:0}p{color:#b5c1b8;line-height:1.5}.card{background:#202e25;border:1px solid #4a5c4f;border-radius:22px;padding:20px;margin:22px 0}h2{margin:0 0 16px;font-size:24px}.pick{display:block;background:#ddc997;color:#142017;padding:17px;border-radius:14px;font-weight:700;text-align:center;cursor:pointer}.pick input{position:absolute;opacity:0;width:1px;height:1px}.photo{width:100%;max-height:360px;object-fit:contain;margin-top:15px;border-radius:12px;background:#121c16;display:none}.hint{font-size:14px}.status{padding:14px;background:#304235;border-radius:14px;margin:16px 0}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.actions button{border:1px solid #ddc997;border-radius:12px;background:transparent;color:#ddc997;padding:12px 16px;font-size:15px}.actions button:disabled{opacity:.4}.small{font-size:13px}strong{color:#f5d99c}
+</style>
+</head>
+<body><main>
+<h1>groove.</h1>
+<p>Camera test · Capture front and back record sleeves. Photos stay on this device.</p>
+<div class="status" id="status">Starting camera test…</div>
+<section class="card"><h2>Front cover</h2>
+<label class="pick">Take / choose front photo<input id="front" type="file" accept="image/*" capture="environment"></label>
+<p id="frontInfo" class="hint">No front photo selected</p><img id="frontPreview" class="photo" alt="Front cover preview">
+<div class="actions"><button type="button" id="frontDownload" disabled>Download front photo</button><button type="button" id="frontClear" disabled>Retake / clear</button></div>
+</section>
+<section class="card"><h2>Back cover</h2>
+<label class="pick">Take / choose back photo<input id="back" type="file" accept="image/*" capture="environment"></label>
+<p id="backInfo" class="hint">No back photo selected</p><img id="backPreview" class="photo" alt="Back cover preview">
+<div class="actions"><button type="button" id="backDownload" disabled>Download back photo</button><button type="button" id="backClear" disabled>Retake / clear</button></div>
+</section>
+<p class="small">This test only previews photos in memory and offers manual downloads. It does not save photos into a collection or recognize albums yet. Closing or refreshing the page clears the previews.</p>
+</main>
+<script>
+(function(){
+'use strict';
+var state={front:null,back:null};
+var status=document.getElementById('status');
+status.textContent='JavaScript running ✓ — ready to capture.';
+function setup(side){
+ var input=document.getElementById(side),img=document.getElementById(side+'Preview'),info=document.getElementById(side+'Info');
+ var download=document.getElementById(side+'Download'),clear=document.getElementById(side+'Clear');
+ input.addEventListener('change',function(){
+  var file=input.files&&input.files[0];if(!file)return;
+  if(!file.type.startsWith('image/')){status.textContent='Please select an image.';return}
+  if(state[side])URL.revokeObjectURL(state[side].url);
+  var url=URL.createObjectURL(file);state[side]={file:file,url:url};
+  img.onload=function(){status.textContent='✓ '+side+' photo loaded. '+(state.front&&state.back?'Both sides ready!':'Capture the other side next.')};
+  img.onerror=function(){status.textContent='Could not display '+side+' image. Try choosing a JPEG photo.'};
+  img.src=url;img.style.display='block';info.textContent=file.name+' · '+Math.round(file.size/1024)+' KB';
+  download.disabled=false;clear.disabled=false;status.textContent='Loading '+side+' preview…';
+ });
+ download.addEventListener('click',function(){
+  var item=state[side];if(!item)return;
+  var a=document.createElement('a');a.href=item.url;a.download='groove-'+side+'-'+item.file.name;
+  document.body.appendChild(a);a.click();a.remove();
+  status.textContent='Download requested. On iPhone, check Downloads or the share sheet.';
+ });
+ clear.addEventListener('click',function(){
+  if(state[side])URL.revokeObjectURL(state[side].url);
+  state[side]=null;input.value='';img.removeAttribute('src');img.style.display='none';
+  info.textContent='No '+side+' photo selected';download.disabled=true;clear.disabled=true;
+  status.textContent='Cleared '+side+' photo. You can retake it.';
+ });
+}
+setup('front');setup('back');
+})();
+</script></body></html>
